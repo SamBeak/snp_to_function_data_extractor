@@ -2,11 +2,19 @@ import requests
 import json
 from bs4 import BeautifulSoup
 from openpyxl import Workbook
+from openpyxl import load_workbook
 import logging
 from datetime import datetime
 import time
+import os
 
 species = 'bos_taurus'
+
+# 설정값
+PROGRESS_FILE = 'progress.json'
+EXCEL_FILE = 'gene_data_output.xlsx'
+AUTO_SAVE_INTERVAL = 10  # 10개 처리마다 자동 저장
+MAX_CONSECUTIVE_FAILURES = 3  # 연속 실패 허용 횟수
 
 # 로깅 설정
 logging.basicConfig(
@@ -83,28 +91,116 @@ def load_positions_from_json(file_path):
         })
     return parsed_snps
 
+def save_progress(current_index, total_count, wb):
+    """현재 진행 상황을 저장"""
+    try:
+        # Excel 파일 저장
+        wb.save(EXCEL_FILE)
+        logger.info(f'중간 저장 완료: {EXCEL_FILE}')
+
+        # 진행 상황 저장
+        progress_data = {
+            'last_processed_index': current_index,
+            'total_count': total_count,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        with open(PROGRESS_FILE, 'w') as f:
+            json.dump(progress_data, f, indent=2)
+        logger.info(f'진행 상황 저장: {current_index}/{total_count}')
+        return True
+    except Exception as e:
+        logger.error(f'저장 실패: {e}')
+        return False
+
+def load_progress():
+    """이전 진행 상황을 불러옴"""
+    if not os.path.exists(PROGRESS_FILE):
+        return None
+
+    try:
+        with open(PROGRESS_FILE, 'r') as f:
+            progress = json.load(f)
+        logger.info(f'이전 진행 상황 발견: {progress["last_processed_index"]}/{progress["total_count"]} ({progress["timestamp"]})')
+        return progress
+    except Exception as e:
+        logger.error(f'진행 상황 로드 실패: {e}')
+        return None
+
+def handle_network_error(consecutive_failures):
+    """네트워크 에러 처리"""
+    if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+        logger.warning(f'\n{"="*60}')
+        logger.warning(f'연속 {MAX_CONSECUTIVE_FAILURES}회 네트워크 에러 발생')
+        logger.warning(f'네트워크 연결을 확인하고 Enter 키를 눌러 재개하세요...')
+        logger.warning(f'{"="*60}\n')
+        input()  # 사용자 입력 대기
+        return 0  # 실패 카운터 리셋
+    return consecutive_failures
+
 
 snps_value = load_positions_from_json('snps.json')
 
-# Excel 워크북 생성
-wb = Workbook()
-ws = wb.active
-ws.title = "Gene Data"
+# 이전 진행 상황 확인
+previous_progress = load_progress()
+start_index = 0
+wb = None
+ws = None
 
-# 헤더 작성
-ws['A1'] = 'SNP'
-ws['B1'] = 'GeneID'
-ws['C1'] = 'Gene'
-ws['D1'] = 'Function'
+if previous_progress and os.path.exists(EXCEL_FILE):
+    # 이전 작업 이어서 진행
+    try:
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb.active
+        start_index = previous_progress['last_processed_index'] + 1
+        logger.info(f'이전 작업을 이어서 진행합니다. 시작 인덱스: {start_index}')
+
+        # 재개 여부 확인
+        response = input(f'\n이전 진행 상황에서 재개하시겠습니까? (y/n): ')
+        if response.lower() != 'y':
+            logger.info('처음부터 새로 시작합니다.')
+            start_index = 0
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Gene Data"
+            # 헤더 작성
+            ws['A1'] = 'SNP'
+            ws['B1'] = 'GeneID'
+            ws['C1'] = 'Gene'
+            ws['D1'] = 'Function'
+    except Exception as e:
+        logger.error(f'이전 파일 로드 실패: {e}. 새로 시작합니다.')
+        start_index = 0
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Gene Data"
+        # 헤더 작성
+        ws['A1'] = 'SNP'
+        ws['B1'] = 'GeneID'
+        ws['C1'] = 'Gene'
+        ws['D1'] = 'Function'
+else:
+    # 새로 시작
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Gene Data"
+    # 헤더 작성
+    ws['A1'] = 'SNP'
+    ws['B1'] = 'GeneID'
+    ws['C1'] = 'Gene'
+    ws['D1'] = 'Function'
 
 # snps_value가 빈 값이 아니면
 if snps_value:
     total_count = len(snps_value)
     logger.info(f'=== 유전자 데이터 처리 시작 ===')
     logger.info(f'총 처리할 SNP 개수: {total_count}')
+    if start_index > 0:
+        logger.info(f'시작 위치: {start_index} (남은 개수: {total_count - start_index})')
 
-    row = 2  # 데이터는 2행부터 시작
-    for i in range(len(snps_value)):
+    row = 2 + start_index  # 데이터는 2행부터 시작 + 이전 진행 상황
+    consecutive_failures = 0  # 연속 실패 카운터
+
+    for i in range(start_index, len(snps_value)):
         chrom = snps_value[i]['chrom']
         pos = snps_value[i]['pos']
         snp_value = chrom + ':' + pos
@@ -124,6 +220,10 @@ if snps_value:
             ws[f'C{row}'] = ''
             ws[f'D{row}'] = ''
             row += 1
+            consecutive_failures = 0  # 성공적으로 처리됨
+            # 자동 저장
+            if (i + 1) % AUTO_SAVE_INTERVAL == 0:
+                save_progress(i, total_count, wb)
             continue
         # 2. GO term ID 얻기
         go_terms = get_go_terms(gene['id'])
@@ -137,6 +237,10 @@ if snps_value:
             ws[f'C{row}'] = gene.get('external_name', '-')
             ws[f'D{row}'] = ''
             row += 1
+            consecutive_failures = 0  # 성공적으로 처리됨
+            # 자동 저장
+            if (i + 1) % AUTO_SAVE_INTERVAL == 0:
+                save_progress(i, total_count, wb)
             continue
 
         # NCBI 요청 시 예외 처리 및 재시도 로직 추가
@@ -151,10 +255,12 @@ if snps_value:
 
             # 재시도 로직 (최대 3번)
             max_retries = 3
+            request_success = False
             for attempt in range(max_retries):
                 try:
                     r = requests.get(url, headers=headers, timeout=30)
                     if r.status_code == 200:
+                        request_success = True
                         break
                     elif r.status_code == 429:  # Too Many Requests
                         logger.warning(f'  └─ NCBI Rate limit 도달, 5초 대기 후 재시도 ({attempt+1}/{max_retries})')
@@ -165,10 +271,19 @@ if snps_value:
                 except requests.exceptions.Timeout:
                     logger.warning(f'  └─ NCBI 요청 타임아웃, 재시도 ({attempt+1}/{max_retries})')
                     time.sleep(2)
+                except requests.exceptions.ConnectionError as e:
+                    logger.warning(f'  └─ NCBI 연결 에러 (네트워크 문제): {e}')
+                    consecutive_failures += 1
+                    # 중간 저장
+                    save_progress(i - 1, total_count, wb)
+                    # 네트워크 에러 처리
+                    consecutive_failures = handle_network_error(consecutive_failures)
+                    time.sleep(2)
                 except requests.exceptions.RequestException as e:
                     logger.warning(f'  └─ NCBI 요청 에러: {e}, 재시도 ({attempt+1}/{max_retries})')
                     time.sleep(2)
-            else:
+
+            if not request_success:
                 # 모든 재시도 실패
                 logger.error(f'  └─ NCBI 요청 실패 (모든 재시도 소진)')
                 ws[f'A{row}'] = snp_value
@@ -176,6 +291,10 @@ if snps_value:
                 ws[f'C{row}'] = gene.get('external_name', '-')
                 ws[f'D{row}'] = ''
                 row += 1
+                consecutive_failures += 1
+                # 자동 저장
+                if (i + 1) % AUTO_SAVE_INTERVAL == 0:
+                    save_progress(i, total_count, wb)
                 continue
 
             soup = BeautifulSoup(r.text, 'html.parser')
@@ -202,15 +321,19 @@ if snps_value:
             ws[f'C{row}'] = gene.get('external_name', '-')
             ws[f'D{row}'] = ''
             row += 1
+            consecutive_failures += 1
+            # 자동 저장
+            if (i + 1) % AUTO_SAVE_INTERVAL == 0:
+                save_progress(i, total_count, wb)
             continue
 
         if functions:
             functionStr = ""
-            for i in range(len(functions)):
-                if i < len(functions) - 1:
-                    f = functions[i] + ", "
+            for func_idx in range(len(functions)):
+                if func_idx < len(functions) - 1:
+                    f = functions[func_idx] + ", "
                 else:
-                    f = functions[i]
+                    f = functions[func_idx]
                 functionStr += f
             logger.info(f'  └─ Function 정보 {len(functions)}개 수집 완료')
             # Excel에 데이터 작성
@@ -219,6 +342,7 @@ if snps_value:
             ws[f'C{row}'] = gene.get('external_name', '-')
             ws[f'D{row}'] = functionStr
             row += 1
+            consecutive_failures = 0  # 성공적으로 처리됨
         else:
             logger.warning(f'  └─ Function 정보 없음')
             ws[f'A{row}'] = snp_value
@@ -226,14 +350,29 @@ if snps_value:
             ws[f'C{row}'] = gene.get('external_name', '-')
             ws[f'D{row}'] = ''
             row += 1
+            consecutive_failures = 0  # 성공적으로 처리됨
+
+        # 자동 저장
+        if (i + 1) % AUTO_SAVE_INTERVAL == 0:
+            save_progress(i, total_count, wb)
+
+    # 최종 저장
     logger.info(f'=== 모든 SNP 처리 완료 ===')
+    save_progress(len(snps_value) - 1, total_count, wb)
 else:
     logger.error('snp.json 파일 형식에 오류가 있습니다.')
-    wb.close()
+    if wb:
+        wb.close()
     exit()
 
-# Excel 파일 저장
-wb.save('gene_data_output.xlsx')
-logger.info(f'Excel 파일 저장 완료: gene_data_output.xlsx')
-wb.close() # Excel 파일 비우기
+# 최종 Excel 파일 저장
+wb.save(EXCEL_FILE)
+logger.info(f'Excel 파일 최종 저장 완료: {EXCEL_FILE}')
+
+# 진행 상황 파일 삭제 (완료되었으므로)
+if os.path.exists(PROGRESS_FILE):
+    os.remove(PROGRESS_FILE)
+    logger.info(f'진행 상황 파일 삭제: {PROGRESS_FILE}')
+
+wb.close()
 
