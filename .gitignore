@@ -1,2 +1,3 @@
 *.log
 progress.json
+.env

@@ -1,0 +1,308 @@
+{
+  "reports": [
+    {
+      "gene": {
+        "gene_id": "",
+        "symbol": "string",
+        "description": "string",
+        "tax_id": "",
+        "taxname": "string",
+        "common_name": "string",
+        "type": "UNKNOWN",
+        "rna_type": "rna_UNKNOWN",
+        "orientation": "none",
+        "reference_standards": [
+          {
+            "gene_range": {
+              "accession_version": "string",
+              "range": [
+                {
+                  "begin": "",
+                  "end": "",
+                  "orientation": "none",
+                  "order": 0,
+                  "ribosomal_slippage": 0
+                }
+              ]
+            },
+            "type": "UNKNOWN"
+          }
+        ],
+        "genomic_regions": [
+          {
+            "gene_range": {
+              "accession_version": "string",
+              "range": [
+                {
+                  "begin": "",
+                  "end": "",
+                  "orientation": "none",
+                  "order": 0,
+                  "ribosomal_slippage": 0
+                }
+              ]
+            },
+            "type": "UNKNOWN"
+          }
+        ],
+        "chromosomes": [
+          "string"
+        ],
+        "nomenclature_authority": {
+          "authority": "string",
+          "identifier": "string"
+        },
+        "swiss_prot_accessions": [
+          "string"
+        ],
+        "ensembl_gene_ids": [
+          "string"
+        ],
+        "omim_ids": [
+          "string"
+        ],
+        "synonyms": [
+          "string"
+        ],
+        "replaced_gene_id": "",
+        "annotations": [
+          {
+            "assembly_accession": "string",
+            "assembly_name": "string",
+            "annotation_name": "string",
+            "annotation_release_date": "string",
+            "genomic_locations": [
+              {
+                "genomic_accession_version": "string",
+                "sequence_name": "string",
+                "genomic_range": {
+                  "begin": "",
+                  "end": "",
+                  "orientation": "none",
+                  "order": 0,
+                  "ribosomal_slippage": 0
+                },
+                "exons": [
+                  {
+                    "begin": "",
+                    "end": "",
+                    "orientation": "none",
+                    "order": 0,
+                    "ribosomal_slippage": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "transcript_count": 0,
+        "protein_count": 0,
+        "transcript_type_counts": [
+          {
+            "type": "UNKNOWN",
+            "count": 0
+          }
+        ],
+        "gene_groups": [
+          {
+            "id": "string",
+            "method": "string"
+          }
+        ],
+        "summary": [
+          {
+            "source": "string",
+            "description": "string",
+            "date": "string"
+          }
+        ],
+        "gene_ontology": {
+          "assigned_by": "string",
+          "molecular_functions": [
+            {
+              "name": "string",
+              "go_id": "string",
+              "evidence_code": "string",
+              "qualifier": "string",
+              "reference": {
+                "pmids": [
+                  ""
+                ]
+              }
+            }
+          ],
+          "biological_processes": [
+            {
+              "name": "string",
+              "go_id": "string",
+              "evidence_code": "string",
+              "qualifier": "string",
+              "reference": {
+                "pmids": [
+                  ""
+                ]
+              }
+            }
+          ],
+          "cellular_components": [
+            {
+              "name": "string",
+              "go_id": "string",
+              "evidence_code": "string",
+              "qualifier": "string",
+              "reference": {
+                "pmids": [
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        "locus_tag": "string"
+      },
+      "product": {
+        "gene_id": "",
+        "symbol": "string",
+        "description": "string",
+        "tax_id": "",
+        "taxname": "string",
+        "common_name": "string",
+        "type": "UNKNOWN",
+        "rna_type": "rna_UNKNOWN",
+        "transcripts": [
+          {
+            "accession_version": "string",
+            "name": "string",
+            "length": 0,
+            "cds": {
+              "accession_version": "string",
+              "range": [
+                {
+                  "begin": "",
+                  "end": "",
+                  "orientation": "none",
+                  "order": 0,
+                  "ribosomal_slippage": 0
+                }
+              ]
+            },
+            "genomic_locations": [
+              {
+                "genomic_accession_version": "string",
+                "sequence_name": "string",
+                "genomic_range": {
+                  "begin": "",
+                  "end": "",
+                  "orientation": "none",
+                  "order": 0,
+                  "ribosomal_slippage": 0
+                },
+                "exons": [
+                  {
+                    "begin": "",
+                    "end": "",
+                    "orientation": "none",
+                    "order": 0,
+                    "ribosomal_slippage": 0
+                  }
+                ]
+              }
+            ],
+            "ensembl_transcript": "string",
+            "protein": {
+              "accession_version": "string",
+              "name": "string",
+              "length": 0,
+              "isoform_name": "string",
+              "ensembl_protein": "string",
+              "mature_peptides": [
+                {
+                  "accession_version": "string",
+                  "name": "string",
+                  "length": 0
+                }
+              ]
+            },
+            "type": "UNKNOWN",
+            "select_category": "SELECT_UNKNOWN"
+          }
+        ],
+        "transcript_count": 0,
+        "protein_count": 0,
+        "transcript_type_counts": [
+          {
+            "type": "UNKNOWN",
+            "count": 0
+          }
+        ]
+      },
+      "query": [
+        "string"
+      ],
+      "warnings": [
+        {
+          "gene_warning_code": "UNKNOWN_GENE_WARNING_CODE",
+          "reason": "string",
+          "message": "string",
+          "replaced_id": {
+            "requested": "string",
+            "returned": "string"
+          },
+          "unrecognized_identifier": "string"
+        }
+      ],
+      "warning": {
+        "gene_warning_code": "UNKNOWN_GENE_WARNING_CODE",
+        "reason": "string",
+        "message": "string",
+        "replaced_id": {
+          "requested": "string",
+          "returned": "string"
+        },
+        "unrecognized_identifier": "string"
+      },
+      "errors": [
+        {
+          "assembly_error_code": "UNKNOWN_ASSEMBLY_ERROR_CODE",
+          "gene_error_code": "UNKNOWN_GENE_ERROR_CODE",
+          "organelle_error_code": "UNKNOWN_ORGANELLE_ERROR_CODE",
+          "virus_error_code": "UNKNOWN_VIRUS_ERROR_CODE",
+          "taxonomy_error_code": "UNKNOWN_TAXONOMY_ERROR_CODE",
+          "reason": "string",
+          "message": "string",
+          "invalid_identifiers": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "error": {
+        "assembly_error_code": "UNKNOWN_ASSEMBLY_ERROR_CODE",
+        "gene_error_code": "UNKNOWN_GENE_ERROR_CODE",
+        "organelle_error_code": "UNKNOWN_ORGANELLE_ERROR_CODE",
+        "virus_error_code": "UNKNOWN_VIRUS_ERROR_CODE",
+        "taxonomy_error_code": "UNKNOWN_TAXONOMY_ERROR_CODE",
+        "reason": "string",
+        "message": "string",
+        "invalid_identifiers": [
+          "string"
+        ]
+      },
+      "warning": {
+        "gene_warning_code": "UNKNOWN_GENE_WARNING_CODE",
+        "reason": "string",
+        "message": "string",
+        "replaced_id": {
+          "requested": "string",
+          "returned": "string"
+        },
+        "unrecognized_identifier": "string"
+      }
+    }
+  ],
+  "total_count": 0,
+  "next_page_token": "string"
+}
